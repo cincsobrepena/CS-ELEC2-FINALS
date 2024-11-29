@@ -31,15 +31,11 @@ public class Enemy : MonoBehaviour
 
             if (bulletRenderer != null && enemyRenderer != null)
             {
-                Destroy(other.gameObject);
-                Debug.Log(bulletRenderer.material);
-                Debug.Log(enemyRenderer.material);
-                // Compare the colors
+                other.gameObject.SetActive(false);
+
                 if (bulletRenderer.material.color == enemyRenderer.material.color)
                 {
-                    // Destroy both objects if colors match
-                    Destroy(gameObject);
-
+                    gameObject.SetActive(false);
                     Debug.Log("Enemy destroyed: Colors matched!");
                 }
                 else

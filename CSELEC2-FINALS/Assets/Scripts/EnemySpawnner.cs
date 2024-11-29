@@ -14,6 +14,20 @@ public class EnemySpawnner : MonoBehaviour
 
     private int currentColorIndex = 0;
 
+    private List<GameObject> enemyPool;
+    public int poolSize = 15;
+
+    private void Start()
+    {
+        enemyPool = new List<GameObject>();
+        for (int i = 0; i < poolSize; i++)
+        {
+            GameObject enemy = Instantiate(enemyPrefab);
+            enemy.SetActive(false); 
+            enemyPool.Add(enemy);
+        }
+    }
+
     private void Update()
     {
         timer += Time.deltaTime;
@@ -33,30 +47,63 @@ public class EnemySpawnner : MonoBehaviour
             return;
         }
 
-        int randomIndex = Random.Range(0, spawnPoints.Length);
-        Debug.Log("Spawning at index: " + randomIndex);
+        GameObject enemy = GetPooledEnemy();
+        if (enemy == null)
+        {
+            Debug.LogWarning("No available enemies in the pool. Consider increasing the pool size.");
+            return;
+        }
 
-        // Get the color for the enemy
+        int randomIndex = Random.Range(0, spawnPoints.Length);
+        Transform spawnPoint = spawnPoints[randomIndex];
+        enemy.transform.position = spawnPoint.position; 
+        enemy.transform.rotation = Quaternion.identity;
+
         currentColorIndex = (currentColorIndex + 1) % colors.Length;
         Material selectedColor = colors[Random.Range(0, colors.Length)];
 
-        GameObject newEnemy = Instantiate(enemyPrefab, spawnPoints[randomIndex].position, Quaternion.identity);
-        Rigidbody newEnemyRb = newEnemy.GetComponent<Rigidbody>();
-        Renderer enemyRenderer = newEnemy.GetComponent<Renderer>();
-
-        newEnemyRb.velocity = spawnPoints[randomIndex].right * enemySpeed * -1f;
+        Renderer enemyRenderer = enemy.GetComponent<Renderer>();
         if (enemyRenderer != null)
         {
-            // Assign the color to the enemy
             enemyRenderer.material = selectedColor;
-
-            // Pass the color to the enemy script (optional for future logic)
-            /*newEnemy.GetComponent<Enemy>().*/
         }
         else
         {
             Debug.LogError("Missing Renderer on enemyPrefab.");
         }
-        Destroy(newEnemy, 5f);
+
+        Rigidbody enemyRb = enemy.GetComponent<Rigidbody>();
+        if (enemyRb != null)
+        {
+            enemyRb.velocity = spawnPoint.right * enemySpeed * -1f;
+        }
+
+        enemy.SetActive(true);
+
+        StartCoroutine(DeactivateAfterDelay(enemy, 10f));
+    }
+
+    GameObject GetPooledEnemy()
+    {
+        foreach (GameObject enemy in enemyPool)
+        {
+            if (!enemy.activeInHierarchy)
+            {
+                return enemy;
+            }
+        }
+        return null; 
+    }
+
+    private System.Collections.IEnumerator DeactivateAfterDelay(GameObject enemy, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        enemy.SetActive(false);
+
+        Rigidbody enemyRb = enemy.GetComponent<Rigidbody>();
+        if (enemyRb != null)
+        {
+            enemyRb.velocity = Vector3.zero;
+        }
     }
 }

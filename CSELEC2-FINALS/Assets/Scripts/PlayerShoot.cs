@@ -15,6 +15,7 @@ public class PlayerShoot : MonoBehaviour
     private float fireDelay = 0.5f;
 
     public Material[] colors;
+    public BulletPool bulletPool;
 
     private int currentColorIndex = 0;
 
@@ -47,7 +48,10 @@ public class PlayerShoot : MonoBehaviour
         
     void ShootBullet()
     {
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+        GameObject bullet = bulletPool.GetBullet();
+        bullet.transform.position = bulletSpawnPoint.position;
+        bullet.transform.rotation = bulletSpawnPoint.rotation;
+        bullet.SetActive(true);
 
         Rigidbody bulletRb = bullet.GetComponent<Rigidbody>();
         Renderer bulletRenderer = bullet.GetComponent<Renderer>();
@@ -59,7 +63,7 @@ public class PlayerShoot : MonoBehaviour
             bulletRenderer.material = bulletColor;
         }
 
-        Destroy(bullet, 5f);
+        StartCoroutine(DeactivateBullet(bullet, 2f));
     }
 
     public Material GetCurrentColor()
@@ -67,6 +71,9 @@ public class PlayerShoot : MonoBehaviour
         return colors[currentColorIndex];
     }
 
-
-    
+    private System.Collections.IEnumerator DeactivateBullet(GameObject bullet, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        bullet.SetActive(false);
+    }
 }
